@@ -1,4 +1,4 @@
 ## Welcome to YUKORE
 
-- [E/I calculation examples] (ei_calc.html)
+- [E/I calculation examples](ei_calc.html)
 
