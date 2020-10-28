@@ -1,5 +1,5 @@
 ---
-title: "EI_calc"
+title: "ei_calc"
 output:
   html_document: default
   pdf_document: default
