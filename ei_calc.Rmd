@@ -1,0 +1,54 @@
+---
+title: "EI_calc"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+library(ggplot2)
+
+calc_EI_d18O <- function(temp = 12, rh = 0.65, dI = -21, ei_by = 0.1) {
+  #convert T input in C to K
+  K <- temp + 273.15
+  # Horita and Wes, 1994 eqs
+  aO18 <- exp((-7.685 + 6.7123 * (10^3/K) - (1.6664*(10^6/K^2)) + (0.35041*(10^9/K^3))) / 1000)
+  eStar <- (aO18 - 1) * 1000
+  dA <- (dI - 0.5*eStar)/(1+10^-3*0.5*eStar)
+  eK <- (14.2*(1-rh))
+  enrich_slope <- (rh-10^-3*(eK+eStar/aO18))/(1-rh+10^-3*eK)
+  lim_enrich <- (rh * dA + eK + eStar/aO18)/(rh - 0.001*(eK + eStar/aO18))
+  
+  st_state_out <- function(ei_list = ei_list) {
+    out <- (ei_list*enrich_slope*lim_enrich+dI)/(1+ei_list*enrich_slope)
+  }
+  
+  ei_list <- seq(from = 0, to = 1, by = ei_by)
+  dL_out <- sapply(ei_list, st_state_out)
+  plot_df <- data.frame("dL" = dL_out, "e.i" = ei_list)
+  plot_out <- ggplot(plot_df, aes(dL, e.i)) +
+    geom_point() +
+    geom_line() +
+    labs(x = "lake water d18O", y = "E/I") +
+    theme_bw()
+      
+  return(plot_out)
+
+}
+```
+
+# Example 1
+
+Air temp = 15C, Relative Humidity = 65%, precip d180 = -21 per mil, E/I ratios every 0.01
+
+
+```{r}
+calc_EI_d18O(temp = 15, rh = 0.65, dI = -21, ei_by = 0.01)
+
+```
+
