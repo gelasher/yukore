@@ -1,12 +1,3 @@
----
-title: "YUKORE"
-output: html_document
----
-
-```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
 ## Welcome to YUKORE
 
 - [E/I calculation examples] (ei_calc.html)
