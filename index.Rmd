@@ -1,4 +1,5 @@
 ## Welcome to YUKORE
+![](images/yukore.png)
 
 - [E/I calculation examples](ei_calc.html)
 - Custom E/I output
