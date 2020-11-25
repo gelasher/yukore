@@ -12,8 +12,9 @@ knitr::opts_chunk$set(echo = TRUE)
 
 ```{r}
 library(ggplot2)
+library(patchwork)
 
-calc_EI_d18O <- function(temp = 12, rh = 0.65, dI = -21, ei_by = 0.1) {
+calc_EI_d18O <- function(temp = 12, rh = 0.65, dI = -21, ei_by = 0.1, dL = -18) {
   #convert T input in C to K
   K <- temp + 273.15
   # Horita and Wes, 1994 eqs
@@ -23,24 +24,46 @@ calc_EI_d18O <- function(temp = 12, rh = 0.65, dI = -21, ei_by = 0.1) {
   eK <- (14.2*(1-rh))
   enrich_slope <- (rh-10^-3*(eK+eStar/aO18))/(1-rh+10^-3*eK)
   lim_enrich <- (rh * dA + eK + eStar/aO18)/(rh - 0.001*(eK + eStar/aO18))
-  
+  aStar <- 1 + eStar
+  e <- eStar + eK
+
   st_state_out <- function(ei_list = ei_list) {
     out <- (ei_list*enrich_slope*lim_enrich+dI)/(1+ei_list*enrich_slope)
   }
   
+   st_evap_out <- function(ei_list = ei_list) {
+    dE <- (((ei_list*enrich_slope*lim_enrich+dI)/(1+ei_list*enrich_slope) - eStar) / aStar - rh * aO18 - eK) / (1 - rh + 0.001 * eK)
+  }
+  
   ei_list <- seq(from = 0, to = 1, by = ei_by)
   dL_out <- sapply(ei_list, st_state_out)
-  plot_df <- data.frame("dL" = dL_out, "e.i" = ei_list)
-  plot_out <- ggplot(plot_df, aes(dL, e.i)) +
+  ei_df <- data.frame("dL" = dL_out, "e.i" = ei_list)
+  
+  dE_out <- sapply(ei_list, st_evap_out)
+  dE_df <- data.frame("dE" = dE_out, "e.i" = ei_list)  
+  
+
+  plot_out1 <- ggplot(ei_df, aes(dL, e.i)) +
     geom_point() +
     geom_line() +
     labs(x = "lake water d18O", y = "E/I") +
     theme_bw()
+  plot_out2 <- ggplot(dE_df, aes(dE, e.i)) +
+    geom_point() +
+    geom_line() +
+    labs(x = "evap d18O", y = "E/I") +
+    theme_bw()
+  
       
-  return(plot_out)
+  return(plot_out1/plot_out2)
 
 }
+
+
 ```
+
+
+
 
 # Example 1
 
@@ -48,7 +71,91 @@ Air temp = 15C, Relative Humidity = 65%, precip d180 = -21 per mil, E/I ratios e
 
 
 ```{r}
-calc_EI_d18O(temp = 15, rh = 0.65, dI = -21, ei_by = 0.01)
+library(patchwork)
+calc_EI_d18O(temp = 5, rh = 0.55, dI = -21, ei_by = 0.01, dL = -17.6)
+
+calc_EI_d18O(temp = 0, rh = 0.75, dI = -21, ei_by = 0.01, dL = -17.6)
+
+
+```
+
+```{r}
+# Air temp = 15C, Relative Humidity = 65%, precip d180 = -21 per mil, E/I ratios every 0.01
+
+temp <- 15
+rh = 0.65
+dI <- -21
+K <- temp + 273.15
+# Horita and Wes, 1994 eqs
+aO18 <- exp((-7.685 + 6.7123 * (10^3/K) - (1.6664*(10^6/K^2)) + (0.35041*(10^9/K^3))) / 1000)
+eStar <- (aO18 - 1) * 1000
+dA <- (dI - 0.5*eStar)/(1+10^-3*0.5*eStar)
+eK <- (14.2*(1-rh))
+enrich_slope <- (rh-10^-3*(eK+eStar/aO18))/(1-rh+10^-3*eK)
+lim_enrich <- (rh * dA + eK + eStar/aO18)/(rh - 0.001*(eK + eStar/aO18))
+  
+st_state_out <- function(ei_list = ei_list) {
+    out <- (ei_list*enrich_slope*lim_enrich+dI)/(1+ei_list*enrich_slope)
+}
+
+ei_list <- seq(from = 0, to = 1, by = 0.01)
+dL_out <- sapply(ei_list, st_state_out)
+ei_df <- data.frame("dL" = dL_out, "e.i" = ei_list)
+
+# Air temp = 12C, Relative Humidity = 65%, precip d180 = -21 per mil, E/I ratios every 0.01
+
+temp <- 12
+rh = 0.55
+dI <- -21
+K <- temp + 273.15
+# Horita and Wes, 1994 eqs
+aO18 <- exp((-7.685 + 6.7123 * (10^3/K) - (1.6664*(10^6/K^2)) + (0.35041*(10^9/K^3))) / 1000)
+eStar <- (aO18 - 1) * 1000
+dA <- (dI - 0.5*eStar)/(1+10^-3*0.5*eStar)
+eK <- (14.2*(1-rh))
+enrich_slope <- (rh-10^-3*(eK+eStar/aO18))/(1-rh+10^-3*eK)
+lim_enrich <- (rh * dA + eK + eStar/aO18)/(rh - 0.001*(eK + eStar/aO18))
+  
+st_state_out <- function(ei_list = ei_list) {
+    out <- (ei_list*enrich_slope*lim_enrich+dI)/(1+ei_list*enrich_slope)
+}
+
+ei_list <- seq(from = 0, to = 1, by = 0.01)
+dL_out2 <- sapply(ei_list, st_state_out)
+ei_df2 <- data.frame("dL" = dL_out2, "e.i" = ei_list)
+
+# new
+
+temp <- 5
+rh = 0.65
+dI <- -21
+K <- temp + 273.15
+# Horita and Wes, 1994 eqs
+aO18 <- exp((-7.685 + 6.7123 * (10^3/K) - (1.6664*(10^6/K^2)) + (0.35041*(10^9/K^3))) / 1000)
+eStar <- (aO18 - 1) * 1000
+dA <- (dI - 0.5*eStar)/(1+10^-3*0.5*eStar)
+eK <- (14.2*(1-rh))
+enrich_slope <- (rh-10^-3*(eK+eStar/aO18))/(1-rh+10^-3*eK)
+lim_enrich <- (rh * dA + eK + eStar/aO18)/(rh - 0.001*(eK + eStar/aO18))
+  
+st_state_out <- function(ei_list = ei_list) {
+    out <- (ei_list*enrich_slope*lim_enrich+dI)/(1+ei_list*enrich_slope)
+}
+
+ei_list <- seq(from = 0, to = 1, by = 0.01)
+dL_out3 <- sapply(ei_list, st_state_out)
+ei_df3<- data.frame("dL" = dL_out3, "e.i" = ei_list)
+
+
+  
+plot_out <- ggplot(ei_df, aes(dL, e.i)) +
+    geom_line() +
+    geom_line(data = ei_df2, aes(dL, e.i), col = 2) +
+    geom_line(data = ei_df3, aes(dL, e.i), col = 3) +
+    labs(x = "lake water d18O", y = "E/I") +
+    theme_bw()
+
+plot_out
 
 ```
 
