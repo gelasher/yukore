@@ -2,5 +2,5 @@
 ![](images/yukore.png)
 
 - [E/I calculation examples](ei_calc.html)
-- [Custom E/I output](ei_shiny/app.R)
+- [Custom E/I output](https://gelasher.shinyapps.io/ei_shiny/)
 
